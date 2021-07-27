@@ -1,6 +1,6 @@
 # Image Quality Assessment
   Original Repo = https://github.com/idealo/image-quality-assessment
-  
+
 ## Getting started
 
 1. Install [jq](https://stedolan.github.io/jq/download/)
@@ -11,6 +11,10 @@
 
 
 ## Predict
+
+Input CSV = src/dataset.csv
+Output CSV = src/output/output.csv
+
     ```bash
     ./predict  \
     --docker-image nima-cpu \
