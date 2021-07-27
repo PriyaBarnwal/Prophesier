@@ -76,6 +76,8 @@ def main(base_model_name, csv_file, img_format='jpg'):
         # Create a csv.writer object from the output file object
         csv_writer = csv.writer(write_obj)
         headers = next(csv_reader)
+        headers.append('technical_score')
+        headers.append('aesthetic_score')
         csv_writer.writerow(headers)
         # Read each row of the input csv file as list
         for row in csv_reader:
