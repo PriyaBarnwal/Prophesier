@@ -22,6 +22,8 @@ COLUMNS = 6
 
 print('Loading hashtags and dataset ...')
 dataset = pd.read_csv('dataset_28July2021.csv', quotechar='"', skipinitialspace=True)
+dataset.dropna(inplace=True)
+dataset = dataset.loc[dataset['Likes'] > 50]
 
 hashtags = read_hashtags()
 
