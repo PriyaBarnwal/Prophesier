@@ -11,13 +11,19 @@ from dateutil.parser import parse
 from keras.layers import Input, Dense, Dropout, Conv2D, MaxPooling2D, Flatten
 from keras.models import Model
 
+def read_hashtags():
+    with open('hashtags.txt', 'r') as file:
+        hashtags = file.read().split()
+        hashtags = dict(enumerate(hashtags))
+        hashtags = {v:k for k,v in hashtags.items()}
+        return hashtags
 
-COLUMNS = 7
+COLUMNS = 6
 
 print('Loading hashtags and dataset ...')
-dataset = pd.read_csv('output_coffee.csv', quotechar='"', skipinitialspace=True)
+dataset = pd.read_csv('dataset_28July2021.csv', quotechar='"', skipinitialspace=True)
 
-# hashtags = read_hashtags()
+hashtags = read_hashtags()
 
 print('Loading image filenames...')
 dir = 'images'
@@ -37,8 +43,8 @@ for index, row in dataset.iterrows():
     # nfollowing = row.numberFollowing
     nfollowers = 0.0 if math.isnan(row.Followers) else row.Followers
     numberLikes = row.Likes
-    technical_score = row.technical_score
-    aesthetic_score = row.aesthetic_score
+    # technical_score = row.technical_score
+    # aesthetic_score = row.aesthetic_score
     date = parse(row.Created_at)
     mydate = date.year * 365 + date.month * 30 + date.day
     # mentions = len(ast.literal_eval(row.mentions))
@@ -48,13 +54,14 @@ for index, row in dataset.iterrows():
     tags = row.tags.split(" ")
     tags = [tag[1:] for tag in tags]
     tagsNumber = len(tags)
-    # tagsValues = [10000 - hashtags[tag] for tag in tags if tag in hashtags]
-    # tagsSum = sum(tagsValues)
-    data = [nfollowers, mydate, date.weekday(), tagsNumber, technical_score, aesthetic_score, numberLikes]
+    tagsValues = [10000 - hashtags[tag] for tag in tags if tag in hashtags]
+    tagsSum = sum(tagsValues)
+    # data = [nfollowers, mydate, date.weekday(), tagsNumber, technical_score, aesthetic_score, numberLikes]
+    data = [nfollowers, mydate, date.weekday(), tagsNumber, tagsSum, numberLikes]
     matrix.append(data)
 
 print('Building model...')
-TRAIN = 1016
+TRAIN = 400
 matrix = np.array(matrix)
 X = matrix[:, :COLUMNS - 1]
 y = matrix[:, COLUMNS - 1]
@@ -130,7 +137,7 @@ class LossHistory(keras.callbacks.Callback):
 print('Training...')
 # Fit the model
 trainingset_size = len(X_train)
-batch_size = 8
+batch_size = 10
 losshistory = LossHistory()
 
 model.fit_generator(seqGenerator(X_train, y_train, batch_size, dir, matrixFilenames),
