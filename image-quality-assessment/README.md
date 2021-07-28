@@ -11,10 +11,10 @@
 
 
 ## Predict
-
-Input CSV = src/dataset.csv
-Output CSV = src/output/output.csv
-
+- Create a folder called test_images within src directory to store the images
+- Input CSV = src/dataset.csv
+- Output CSV = src/output/output.csv
+- Run the predict script:
     ```bash
     ./predict  \
     --docker-image nima-cpu \

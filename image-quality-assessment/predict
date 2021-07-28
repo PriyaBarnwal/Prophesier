@@ -32,6 +32,7 @@ DOCKER_RUN="docker run
   -v "$(pwd)"/models/MobileNet/weights_mobilenet_technical_0.11.hdf5:/src/weights_technical.hdf5
   -v "$(pwd)"/models/MobileNet/weights_mobilenet_aesthetic_0.07.hdf5:/src/weights_aesthetic.hdf5
   -v "$(pwd)"/src/output:/src/output
+  -v "$(pwd)"/src/test_images:/src/test_images
   $DOCKER_IMAGE $BASE_MODEL_NAME /src/$BASENAME_IS"
 
 eval $DOCKER_RUN
