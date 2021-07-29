@@ -1,15 +1,13 @@
-import ast
 import math
 from os import listdir
 from os.path import isfile, join
-
 import keras
 import numpy as np
 import pandas as pd
 import scipy.misc
 from dateutil.parser import parse
 from keras.layers import Input, Dense, Dropout, Conv2D, MaxPooling2D, Flatten
-from keras.models import Model
+from keras.models import Model, load_model
 
 def read_hashtags():
     with open('hashtags.txt', 'r') as file:
@@ -24,7 +22,7 @@ print('Loading hashtags and dataset ...')
 dataset = pd.read_csv('dataset_28July2021.csv', quotechar='"', skipinitialspace=True)
 dataset.dropna(inplace=True)
 dataset = dataset.loc[dataset['Likes'] > 50]
-
+#dataset = dataset.head(100)
 hashtags = read_hashtags()
 
 print('Loading image filenames...')
@@ -63,7 +61,7 @@ for index, row in dataset.iterrows():
     matrix.append(data)
 
 print('Building model...')
-TRAIN = 400
+TRAIN = int(0.9*len(dataset))
 matrix = np.array(matrix)
 X = matrix[:, :COLUMNS - 1]
 y = matrix[:, COLUMNS - 1]
@@ -128,6 +126,31 @@ def seqGenerator(X_train, y_train, batch_size, dir, filenames):
         yield [images_batch, x_batch], y_batch
 
 
+
+
+def seqTestGenerator(X_test, y_test, batch_size, dir, filenames):
+    index = 0
+    num_train = X_test.shape[0]
+    print("lopping ",index)
+    images_batch = []
+    x_batch = []
+    y_batch = []
+    for i in range(batch_size):
+        img = scipy.misc.imread(join(dir, filenames[len(X_train)]), mode='RGB')
+        img = scipy.misc.imresize(img, (IMAGE_SIZE, IMAGE_SIZE, CHANNELS))
+        img = img / 255
+        images_batch.append(img)
+        x_batch.append(X_test[index])
+        y_batch.append(y_test[index])
+        index = index + 1 if not index == num_train-1 else 0
+
+    images_batch = np.asarray(images_batch)
+    x_batch = np.asarray(x_batch)
+    y_batch = np.asarray(y_batch)
+    yield [images_batch, x_batch]
+
+
+
 class LossHistory(keras.callbacks.Callback):
     def on_train_begin(self, logs={}):
         self.losses = []
@@ -141,6 +164,24 @@ print('Training...')
 trainingset_size = len(X_train)
 batch_size = 10
 losshistory = LossHistory()
-
 model.fit_generator(seqGenerator(X_train, y_train, batch_size, dir, matrixFilenames),
-                    steps_per_epoch=trainingset_size // batch_size, epochs=25, callbacks=[losshistory])
+                     steps_per_epoch=trainingset_size // batch_size, epochs=7, callbacks=[losshistory])
+
+
+# save the model to disk
+model.save('prophesier_15_epoch.h5')
+#model = load_model('my_model_full.h5')
+#
+# print("model loaded")
+
+# print("Evaluate model on test data")
+# score = model.evaluate(seqTestGenerator(X_test, y_test, 20, dir, matrixFilenames), verbose=0)
+# print("test loss, test acc:", score)
+
+# Generate a prediction using model.predict()
+# and calculate it's shape:
+# print("Generate a prediction")
+# prediction = model.predict(seqTestGenerator(X_test, y_test, 20, dir, matrixFilenames))
+# print("prediction shape:", prediction.shape)
+# print("actual ---> prediction")
+# print(y_test[:20], "--->", prediction.flatten())
