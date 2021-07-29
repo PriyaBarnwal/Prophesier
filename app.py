@@ -8,14 +8,12 @@ from fastapi import FastAPI
 from keras.models import load_model
 from pydantic import BaseModel
 from scipy.misc import imread
-import tensorflow as tf
 
 IMAGE_SIZE = 256
 CHANNELS = 3
 model = load_model('my_model_full.h5')
 
 app = FastAPI()
-
 
 def read_hashtags():
     with open('hashtags.txt', 'r') as file:
@@ -24,6 +22,7 @@ def read_hashtags():
         hashtags = {v: k for k, v in hashtags.items()}
     return hashtags
 
+hashtags = read_hashtags()
 
 def finalFeatureSet(data, item):
     dataMatrix = []
@@ -59,11 +58,6 @@ class Input(BaseModel):
     publishDate = ""
     nfollowers = 0
     images = []
-
-
-hashtags = read_hashtags()
-graph = tf.compat.v1.get_default_graph()
-
 
 @app.get("/ping")
 async def ping():
