@@ -11,7 +11,7 @@ from scipy.misc import imread
 
 IMAGE_SIZE = 256
 CHANNELS = 3
-model = load_model('my_model_full.h5')
+model = load_model('ABC_Nov19.h5')
 
 app = FastAPI()
 

@@ -34,8 +34,8 @@ def read_hashtags():
 COLUMNS = 5
 
 print('Loading hashtags and dataset ...')
-dataset = pd.read_csv('/Users/prashant.gupta/Downloads/EP/ABC_VPC_Nov19_1.csv', quotechar='"', skipinitialspace=True)
-dataset.dropna(inplace=True)
+dataset = pd.read_csv('/Users/prashant.gupta/Downloads/EP/ABC_VPC_Nov19-Table 1.csv', quotechar='"', skipinitialspace=True)
+# dataset.dropna()
 dataset = dataset.loc[dataset['instagram_post_likes'] > 50]
 dataset = dataset.head(100)
 hashtags = read_hashtags()
@@ -73,7 +73,7 @@ for index, row in dataset.iterrows():
     tagsNumber = len(tags)
     tagsValues = [10000 - hashtags[tag] for tag in tags if tag in hashtags]
     tagsSum = sum(tagsValues)
-    likes_ratio = numberLikes/nfollowers
+    # likes_ratio = numberLikes/nfollowers
 
     # data = [nfollowers, mydate, date.weekday(), tagsNumber, technical_score, aesthetic_score, numberLikes]
     data = [mydate, date.weekday(), tagsNumber, tagsSum, numberLikes]
