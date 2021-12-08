@@ -16,17 +16,17 @@ def read_hashtags():
         hashtags = {v:k for k,v in hashtags.items()}
         return hashtags
 
-COLUMNS = 6
+COLUMNS = 5
 
 print('Loading hashtags and dataset ...')
-dataset = pd.read_csv('dataset_28July2021.csv', quotechar='"', skipinitialspace=True)
+dataset = pd.read_csv('gopro_15July.csv', quotechar='"', skipinitialspace=True)
 dataset.dropna(inplace=True)
 dataset = dataset.loc[dataset['Likes'] > 50]
 #dataset = dataset.head(100)
 hashtags = read_hashtags()
 
 print('Loading image filenames...')
-dir = 'images'
+dir = 'gopro'
 filenames = [f for f in listdir(dir) if isfile(join(dir, f))]
 
 print('Building matrix...')
@@ -56,8 +56,10 @@ for index, row in dataset.iterrows():
     tagsNumber = len(tags)
     tagsValues = [10000 - hashtags[tag] for tag in tags if tag in hashtags]
     tagsSum = sum(tagsValues)
+    likes_ratio = numberLikes/nfollowers
+
     # data = [nfollowers, mydate, date.weekday(), tagsNumber, technical_score, aesthetic_score, numberLikes]
-    data = [nfollowers, mydate, date.weekday(), tagsNumber, tagsSum, numberLikes]
+    data = [mydate, date.weekday(), tagsNumber, tagsSum, numberLikes]
     matrix.append(data)
 
 print('Building model...')
@@ -162,26 +164,26 @@ class LossHistory(keras.callbacks.Callback):
 print('Training...')
 # Fit the model
 trainingset_size = len(X_train)
-batch_size = 10
+batch_size = 25
 losshistory = LossHistory()
-model.fit_generator(seqGenerator(X_train, y_train, batch_size, dir, matrixFilenames),
-                     steps_per_epoch=trainingset_size // batch_size, epochs=7, callbacks=[losshistory])
+# model.fit_generator(seqGenerator(X_train, y_train, batch_size, dir, matrixFilenames),
+#                      steps_per_epoch=30, epochs=20, callbacks=[losshistory])
 
 
 # save the model to disk
-model.save('prophesier_15_epoch.h5')
-#model = load_model('my_model_full.h5')
+#model.save('gopro_5_feature.h5')
+model = load_model('gopro_5_feature.h5')
 #
 # print("model loaded")
 
-# print("Evaluate model on test data")
-# score = model.evaluate(seqTestGenerator(X_test, y_test, 20, dir, matrixFilenames), verbose=0)
-# print("test loss, test acc:", score)
+print("Evaluate model on test data")
+score = model.evaluate(seqTestGenerator(X_test, y_test, 5, dir, matrixFilenames), verbose=0)
+print("test loss, test acc:", score)
 
 # Generate a prediction using model.predict()
 # and calculate it's shape:
-# print("Generate a prediction")
-# prediction = model.predict(seqTestGenerator(X_test, y_test, 20, dir, matrixFilenames))
-# print("prediction shape:", prediction.shape)
-# print("actual ---> prediction")
-# print(y_test[:20], "--->", prediction.flatten())
+print("Generate a prediction")
+prediction = model.predict(seqTestGenerator(X_test, y_test, 5, dir, matrixFilenames))
+print("prediction shape:", prediction.shape)
+print("actual ---> prediction")
+print(y_test[:10], "--->", prediction.flatten())
