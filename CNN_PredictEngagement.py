@@ -5,9 +5,24 @@ import keras
 import numpy as np
 import pandas as pd
 import scipy.misc
+import re
 from dateutil.parser import parse
 from keras.layers import Input, Dense, Dropout, Conv2D, MaxPooling2D, Flatten
 from keras.models import Model, load_model
+
+def extract_hashtags(text):
+
+    # the regular expression
+    regex = "#(\w+)"
+
+    # extracting the hashtags
+    hashtag_list = re.findall(regex, text)
+
+    # printing the hashtag_list
+    # print("The hashtags in \"" + text + "\" are :")
+    # for hashtag in hashtag_list:
+    #     print(hashtag)
+    return hashtag_list
 
 def read_hashtags():
     with open('hashtags.txt', 'r') as file:
@@ -19,14 +34,14 @@ def read_hashtags():
 COLUMNS = 5
 
 print('Loading hashtags and dataset ...')
-dataset = pd.read_csv('gopro_15July.csv', quotechar='"', skipinitialspace=True)
+dataset = pd.read_csv('/Users/prashant.gupta/Downloads/EP/ABC_VPC_Nov19_1.csv', quotechar='"', skipinitialspace=True)
 dataset.dropna(inplace=True)
-dataset = dataset.loc[dataset['Likes'] > 50]
-#dataset = dataset.head(100)
+dataset = dataset.loc[dataset['instagram_post_likes'] > 50]
+dataset = dataset.head(100)
 hashtags = read_hashtags()
 
 print('Loading image filenames...')
-dir = 'gopro'
+dir = '/Users/prashant.gupta/Downloads/EP/images/'
 filenames = [f for f in listdir(dir) if isfile(join(dir, f))]
 
 print('Building matrix...')
@@ -35,23 +50,25 @@ matrixFilenames = []
 
 for index, row in dataset.iterrows():
     # Build filename from url
-    filename = row.image[row.image.rfind('/') + 1:row.image.rfind('?')]
+    # filename = row.image[row.image.rfind('/') + 1:row.image.rfind('?')]
+    filename = row.image_url[row.image_url.rfind('/') + 1 : len(row.image_url)] + '.jpg'
     if not filename in filenames: continue
 
     matrixFilenames.append(filename)
     # nposts = row.numberPosts
     # nfollowing = row.numberFollowing
-    nfollowers = 0.0 if math.isnan(row.Followers) else row.Followers
-    numberLikes = row.Likes
+    nfollowers = 0.0 if math.isnan(row.followers) else row.followers
+    numberLikes = row.instagram_post_likes
     # technical_score = row.technical_score
     # aesthetic_score = row.aesthetic_score
-    date = parse(row.Created_at)
+    date = parse(row.created_time)
     mydate = date.year * 365 + date.month * 30 + date.day
     # mentions = len(ast.literal_eval(row.mentions))
     # meanNumberLikes = m.loc[m.index == row.alias].numberLikes[0]
 
     # hashtag analysis
-    tags = row.tags.split(" ")
+    # tags = row.tags.split(" ")
+    tags = extract_hashtags(row.text)
     tags = [tag[1:] for tag in tags]
     tagsNumber = len(tags)
     tagsValues = [10000 - hashtags[tag] for tag in tags if tag in hashtags]
@@ -166,13 +183,13 @@ print('Training...')
 trainingset_size = len(X_train)
 batch_size = 25
 losshistory = LossHistory()
-# model.fit_generator(seqGenerator(X_train, y_train, batch_size, dir, matrixFilenames),
-#                      steps_per_epoch=30, epochs=20, callbacks=[losshistory])
+model.fit_generator(seqGenerator(X_train, y_train, batch_size, dir, matrixFilenames),
+                     steps_per_epoch=30, epochs=20, callbacks=[losshistory])
 
 
 # save the model to disk
-#model.save('gopro_5_feature.h5')
-model = load_model('gopro_5_feature.h5')
+model.save('ABC_Nov19.h5')
+# model = load_model('gopro_5_feature.h5')
 #
 # print("model loaded")
 
