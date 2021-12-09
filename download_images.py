@@ -8,10 +8,12 @@ rows = dataset.shape[0]
 
 for row in range(rows):
     print('downloading row ', row, '\r')
-    url = dataset.image_url[row]
-    filename = url
     try:
-        urllib.request.urlretrieve('http://' + url, '/Users/prashant.gupta/Downloads/EP/images/' + filename[filename.rfind('/') + 1: len(filename)] + '.jpg')
+        if type(dataset.image_url[row]) != str: continue
+        url = dataset.image_url[row]
+        # filename = url[url.rfind('/') + 1 : len(url)] + '.jpg' if url.startswith('s3') else url[url.rfind('/') + 1 : url.rfind('?')]
+        # url = 'http://' + url if url.startswith('s3') else url
+        urllib.request.urlretrieve('http://' + url, '/Users/prashant.gupta/Downloads/EP/images1/' + url[url.rfind('/') + 1 : len(url)] + '.jpg') if url.startswith('s3') else print('Not downloading - ' + url)
     except:
         print('Error downloading image(s) at row ', row)
         with open('log.txt', 'a') as log:

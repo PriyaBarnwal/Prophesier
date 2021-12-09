@@ -13,10 +13,13 @@ from keras.models import Model, load_model
 def extract_hashtags(text):
 
     # the regular expression
-    regex = "#(\w+)"
+    # regex = "#(\w+)"
 
     # extracting the hashtags
-    hashtag_list = re.findall(regex, text)
+    # print(">>>>" + text)
+    # hashtag_list = re.findall(regex, text)
+
+    hashtag_list = [word[1:] for word in str(text).split() if word[0] == '#']
 
     # printing the hashtag_list
     # print("The hashtags in \"" + text + "\" are :")
@@ -31,13 +34,12 @@ def read_hashtags():
         hashtags = {v:k for k,v in hashtags.items()}
         return hashtags
 
-COLUMNS = 5
 
 print('Loading hashtags and dataset ...')
 dataset = pd.read_csv('/Users/prashant.gupta/Downloads/EP/ABC_VPC_Nov19-Table 1.csv', quotechar='"', skipinitialspace=True)
 # dataset.dropna()
 dataset = dataset.loc[dataset['instagram_post_likes'] > 50]
-dataset = dataset.head(100)
+# dataset = dataset.head(10000)
 hashtags = read_hashtags()
 
 print('Loading image filenames...')
@@ -51,7 +53,7 @@ matrixFilenames = []
 for index, row in dataset.iterrows():
     # Build filename from url
     # filename = row.image[row.image.rfind('/') + 1:row.image.rfind('?')]
-    filename = row.image_url[row.image_url.rfind('/') + 1 : len(row.image_url)] + '.jpg'
+    filename = str(row.image_url)[str(row.image_url).rfind('/') + 1 : len(str(row.image_url))] + '.jpg'
     if not filename in filenames: continue
 
     matrixFilenames.append(filename)
@@ -59,6 +61,8 @@ for index, row in dataset.iterrows():
     # nfollowing = row.numberFollowing
     nfollowers = 0.0 if math.isnan(row.followers) else row.followers
     numberLikes = row.instagram_post_likes
+    numberImpressions = row.instagram_post_impressions
+    numberReach = row.instagram_post_reach
     # technical_score = row.technical_score
     # aesthetic_score = row.aesthetic_score
     date = parse(row.created_time)
@@ -76,11 +80,13 @@ for index, row in dataset.iterrows():
     # likes_ratio = numberLikes/nfollowers
 
     # data = [nfollowers, mydate, date.weekday(), tagsNumber, technical_score, aesthetic_score, numberLikes]
-    data = [mydate, date.weekday(), tagsNumber, tagsSum, numberLikes]
+    data = [mydate, date.weekday(), tagsNumber, tagsSum, numberImpressions, numberReach, numberLikes] #keep numberLikes always at last in this array
     matrix.append(data)
 
+COLUMNS = len(matrix[0])
 print('Building model...')
-TRAIN = int(0.9*len(dataset))
+# TRAIN = int(0.9*len(dataset))
+TRAIN = int(0.9*len(matrix))
 matrix = np.array(matrix)
 X = matrix[:, :COLUMNS - 1]
 y = matrix[:, COLUMNS - 1]
@@ -148,25 +154,28 @@ def seqGenerator(X_train, y_train, batch_size, dir, filenames):
 
 
 def seqTestGenerator(X_test, y_test, batch_size, dir, filenames):
-    index = 0
-    num_train = X_test.shape[0]
-    print("lopping ",index)
-    images_batch = []
-    x_batch = []
-    y_batch = []
-    for i in range(batch_size):
-        img = scipy.misc.imread(join(dir, filenames[len(X_train)]), mode='RGB')
-        img = scipy.misc.imresize(img, (IMAGE_SIZE, IMAGE_SIZE, CHANNELS))
-        img = img / 255
-        images_batch.append(img)
-        x_batch.append(X_test[index])
-        y_batch.append(y_test[index])
-        index = index + 1 if not index == num_train-1 else 0
+    index = len(X_train)
+    num_train = index + X_test.shape[0]
 
-    images_batch = np.asarray(images_batch)
-    x_batch = np.asarray(x_batch)
-    y_batch = np.asarray(y_batch)
-    yield [images_batch, x_batch]
+    while index <= num_train-batch_size:
+        images_batch = []
+        x_batch = []
+        y_batch = []
+
+        for i in range(batch_size):
+            #print("lopping ",index)
+            img = scipy.misc.imread(join(dir, filenames[index]), mode='RGB')
+            img = scipy.misc.imresize(img, (IMAGE_SIZE, IMAGE_SIZE, CHANNELS))
+            img = img / 255
+            images_batch.append(img)
+            x_batch.append(X_test[index%len(X_train)])
+            y_batch.append(y_test[index%len(X_train)])
+            index = index + 1
+
+        images_batch = np.asarray(images_batch)
+        x_batch = np.asarray(x_batch)
+        y_batch = np.asarray(y_batch)
+        yield [images_batch, x_batch], y_batch
 
 
 
@@ -189,7 +198,7 @@ model.fit_generator(seqGenerator(X_train, y_train, batch_size, dir, matrixFilena
 
 # save the model to disk
 model.save('ABC_Nov19.h5')
-# model = load_model('gopro_5_feature.h5')
+# model = load_model('ABC_Nov19.h5')
 #
 # print("model loaded")
 
