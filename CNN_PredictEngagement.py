@@ -7,6 +7,7 @@ import pandas as pd
 import scipy.misc
 import re
 from dateutil.parser import parse
+from keras.callbacks import EarlyStopping
 from keras.layers import Input, Dense, Dropout, Conv2D, MaxPooling2D, Flatten
 from keras.models import Model, load_model
 
@@ -39,7 +40,13 @@ print('Loading hashtags and dataset ...')
 dataset = pd.read_csv('/Users/prashant.gupta/Downloads/EP/ABC_VPC_Nov19-Table 1.csv', quotechar='"', skipinitialspace=True)
 # dataset.dropna()
 dataset = dataset.loc[dataset['instagram_post_likes'] > 50]
-# dataset = dataset.head(10000)
+#dataset = dataset.head(500)
+
+account_to_reach_map = dataset.groupby('account_name')['instagram_post_reach'].mean().to_dict()
+account_to_impressions_map = dataset.groupby('account_name')['instagram_post_impressions'].mean().to_dict()
+
+
+
 hashtags = read_hashtags()
 
 print('Loading image filenames...')
@@ -63,6 +70,8 @@ for index, row in dataset.iterrows():
     numberLikes = row.instagram_post_likes
     numberImpressions = row.instagram_post_impressions
     numberReach = row.instagram_post_reach
+    avgAccountReach = account_to_reach_map[row.account_name]
+    avgAccountImpressions = account_to_impressions_map[row.account_name]
     # technical_score = row.technical_score
     # aesthetic_score = row.aesthetic_score
     date = parse(row.created_time)
@@ -80,7 +89,7 @@ for index, row in dataset.iterrows():
     # likes_ratio = numberLikes/nfollowers
 
     # data = [nfollowers, mydate, date.weekday(), tagsNumber, technical_score, aesthetic_score, numberLikes]
-    data = [mydate, date.weekday(), tagsNumber, tagsSum, numberImpressions, numberReach, numberLikes] #keep numberLikes always at last in this array
+    data = [date.weekday(), tagsNumber, tagsSum, avgAccountImpressions, avgAccountReach, numberLikes] #keep numberLikes always at last in this array
     matrix.append(data)
 
 COLUMNS = len(matrix[0])
@@ -190,10 +199,14 @@ class LossHistory(keras.callbacks.Callback):
 print('Training...')
 # Fit the model
 trainingset_size = len(X_train)
+print('training size ', trainingset_size)
 batch_size = 25
+steps = trainingset_size //batch_size
+print('steps per epoch ', steps)
 losshistory = LossHistory()
+es = EarlyStopping(monitor="loss", mode="min", patience=5, restore_best_weights=True)
 model.fit_generator(seqGenerator(X_train, y_train, batch_size, dir, matrixFilenames),
-                     steps_per_epoch=30, epochs=20, callbacks=[losshistory])
+                     steps_per_epoch= steps, epochs=20, callbacks=[losshistory, es])
 
 
 # save the model to disk
