@@ -1,9 +1,9 @@
 
 # Engagement Prophesier
 
-> Predict social media engagement *before* you publish.
-
+> Predict social media engagement *before* you publish. 
 Engagement Prophesier is an AI-powered image engagement predictor for social media. It enables marketers to select the most engaging image from a set of options by analyzing visual and metadata attributes using a deep learning model.
+
 ---
 
 ## 📌 Overview
