@@ -3,8 +3,7 @@
 
 > Predict social media engagement *before* you publish.
 
-Engagement Prophesier is an AI-powered image engagement predictor for social media marketing. It enables marketers to select the most engaging image from a set of options by analyzing visual and metadata attributes using a deep learning model. Built to integrate with the Khoros Marketing platform, this tool empowers businesses to drive better engagement, save time, and increase ROI on content publishing.
-
+Engagement Prophesier is an AI-powered image engagement predictor for social media. It enables marketers to select the most engaging image from a set of options by analyzing visual and metadata attributes using a deep learning model.
 ---
 
 ## 📌 Overview
